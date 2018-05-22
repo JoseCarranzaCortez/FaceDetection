@@ -12,7 +12,7 @@ import splitting.SplittingStrategy;
  *
  * @author José Carranza
  */
-public class TestRetropropagacion {
+public class TestTraining {
 
     public static void main(String[] args) throws IOException {
         Data d = Data.loadFile(args[1], true);
