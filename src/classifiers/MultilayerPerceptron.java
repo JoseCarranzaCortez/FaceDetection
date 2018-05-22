@@ -163,7 +163,7 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
             /* Iteramos por los conjuntos de training */
             double errorAcumulado = 0;
             double errores = 0;
-            for (Double[] s : datosTrain.getDatos()) {  // Paso 2
+            for (Double[] s : datosTrain.getData()) {  // Paso 2
 
                 feedForward(s); // Pasos 3, 4 y 5.
 
@@ -181,7 +181,7 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
             }
 
 
-            ecm = errorAcumulado / m / datosTrain.getNumDatos();
+            ecm = errorAcumulado / m / datosTrain.getDataCount();
             
             double ratioError = Math.abs(1d - ecm / last);
             
@@ -196,7 +196,7 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
                 parar = true;
             }
             last = ecm;
-            double porcErr = (double) errores / datosTrain.getNumDatos();
+            double porcErr = (double) errores / datosTrain.getDataCount();
             try {
                 bw.write(counter + "," + ecm + "\n");
             } catch (IOException ex) {
@@ -216,7 +216,7 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
     @Override
     public ArrayList<Integer> classify(Data datosTest) {
         ArrayList<Integer> clases = new ArrayList<>();
-        for (Double[] s : datosTest.getDatos()) {
+        for (Double[] s : datosTest.getData()) {
             int clasePred = classifyPattern(convertArray(s));
             clases.add(clasePred);
         }

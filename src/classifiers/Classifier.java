@@ -57,66 +57,62 @@ abstract public class Classifier implements Serializable{
     /**
      * Calculates the error rate of the classifiers.
      *
-     * @param datos Conjunto de datos de los cuales conocemos las clases reales.
-     * @param clas Classifier utilizado.
-     * @return Tasa de fallo del clasificador.
+     * @param dataSet Set of data of which we know real classes.
+     * @param clas Classifier used.
+     * @return Failure rate of the classifier.
      */
-    public double error(Data datos, Classifier clas) {
-        // Clasificamos el conjunto de datos
-        ArrayList<Integer> clases = clas.classify(datos);
+    public double error(Data dataSet, Classifier clas) {
+        // First, we classify the dataset
+        ArrayList<Integer> clases = clas.classify(dataSet);
 
         if (PRINT_RESULTS) {
             System.out.println("\n\nReal classes and predictions:");
         }
-        double falsosPositivos = 0;
+        double falsePositives = 0;
         double error = 0;
-        for (int i = 0; i < datos.getNumDatos(); i++) {
+        for (int i = 0; i < dataSet.getDataCount(); i++) {
             // La clase real se encuentra en la última posición del array.
-            double a = datos.getDatos().get(i)[datos.getClassIndex()];
-//            if (a == 0) {
-//                a = -1;
-//            }
+            double a = dataSet.getData().get(i)[dataSet.getClassIndex()];
             int b = clases.get(i);
 
             if (PRINT_RESULTS) {
-                System.out.println("Clase real: " + a + ", Predicción:: " + (double) b);
+                System.out.println("Real Class: " + a + ", Preducted Class: " + (double) b);
             }
             if ((int) a != b) {
-                // El clasificador no clasificó correctamente.
+                // The classifier did not predict correctly
                 if(b == 1){
-                    falsosPositivos++;
+                    falsePositives++;
                 }
                 error++;
             }
         }
-        System.out.println("falsos positivos: "+falsosPositivos+". "+(100d*falsosPositivos/error)+"%");
-        // Devolvemos porcentaje de error
-        return 100 * error / datos.getNumDatos();
+        System.out.println("Flase positives: "+falsePositives+". "+(100d*falsePositives/error)+"%");
+        // Return the error rate
+        return 100 * error / dataSet.getDataCount();
     }
 
-    // Realiza una clasificacion utilizando una estrategia de particionado determinada
     /**
-     * Realiza una clasificacion utilizando una estrategia de particionado determinada.
+     * Classifies a dataset using a specified splitting strategy
      *
-     * @param part Estrategia de particionado.
-     * @param datos Conjunto de datos.
+     * @param splittingStrategy Splitting strategy.
+     * @param dataSet Dataset to be classified.
      * @param clas Classifier.
-     * @return Lista de errores de todas las particiones utilizadas.
+     * @return list of errors of all partitions.
      */
-    public static ArrayList<Double> validacion(SplittingStrategy part, Data datos, Classifier clas) {
-        //Creamos las particiones siguiendo la estrategia llamando a part.creaParticiones
+    public static ArrayList<Double> validacion(SplittingStrategy splittingStrategy, Data dataSet, Classifier clas) {
+        // First, we create the partitions.
         ArrayList<Partition> p;                         // Lista de particiones 
         ArrayList<Double> errores = new ArrayList<>();  // Lista de errores
-        p = part.crearParticiones(datos);
+        p = splittingStrategy.crearParticiones(dataSet);
 
         for (Partition p1 : p) {
-            // Entrenamos utilizando el conjunto de training
-            clas.training(datos.extraeDatosTrain(p1));
-            System.out.println("Entrenamiento terminado");
-            // Clasificamos utilizando el conjunto de prueba
-            double error = clas.error(datos.extraeDatosTest(p1), clas);
+            // Train using current partition's train set.
+            clas.training(dataSet.extractTrainData(p1));
+            System.out.println("Training Finished");
+            // Classigy using the test set.
+            double error = clas.error(dataSet.extractTestData(p1), clas);
 
-            // Agregamos el porcentaje de error a la lista de errores.
+            // Add error rate to the list
             errores.add(error);
         }
         return errores;
@@ -128,7 +124,7 @@ abstract public class Classifier implements Serializable{
             oos.writeObject(this);
             oos.close();
         } catch (IOException ex) {
-            System.out.println("Error guardando el clasificador en: "+path);
+            System.out.println("Error saving classifier on: "+path);
             Logger.getLogger(Classifier.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -140,7 +136,7 @@ abstract public class Classifier implements Serializable{
             ois.close();
             return c;
         } catch (Exception ex) {
-            System.out.println("Error leyendo el clasificador en: "+path);
+            System.out.println("Error reading classifier from: "+path);
             Logger.getLogger(Classifier.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }

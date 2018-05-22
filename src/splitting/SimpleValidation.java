@@ -32,7 +32,7 @@ public class SimpleValidation implements SplittingStrategy {
     public ArrayList<Partition> crearParticiones(Data datos) {
         ArrayList<Partition> particiones = new ArrayList<>();
 
-        int total = datos.getNumDatos();
+        int total = datos.getDataCount();
 //        System.out.println("Total: "+total);
 
         int idx_train = (int) ((double) total * PORCENTAJE_TRAIN);

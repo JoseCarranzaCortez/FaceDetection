@@ -16,99 +16,79 @@ import java.util.Map;
 
 public class Data {
 
-    private int numAtributos = 0;
-    private int numClases = 0;
+    private int attributeCount = 0;
+    private int classCount = 0;
 
-    ArrayList<Double[]> datos = new ArrayList<>();
+    ArrayList<Double[]> data = new ArrayList<>();
 
-    public Data(int numAtributos, int numClases) {
-        this.numClases = numClases;
-        this.numAtributos = numAtributos;
+    public Data(int attributeCount, int classCount) {
+        this.classCount = classCount;
+        this.attributeCount = attributeCount;
     }
 
-    public void addDato(Double[] dato) {
-        datos.add(dato);
+    public void addData(Double[] data) {
+        this.data.add(data);
     }
 
-    public int getNumDatos() {
-        return this.datos.size();
+    public int getDataCount() {
+        return this.data.size();
     }
 
-    public int getNumAtributos() {
-        return this.numAtributos;
+    public int getAttributeCount() {
+        return this.attributeCount;
     }
 
-    public int getNumClases() {
-        return numClases;
+    public int getClassCount() {
+        return classCount;
     }
 
-    public ArrayList<Double[]> getDatos() {
-        return datos;
+    public ArrayList<Double[]> getData() {
+        return data;
     }
 
     public int getClassIndex() {
-        return this.numAtributos;
+        return this.attributeCount;
     }
 
-    public Map<Integer, Double> getProbablidadesAPriori() {
+    public Map<Integer, Double> getAPrioriProbabilities() {
         double aux;
         double count;
-        int nAtributos = this.numAtributos;
+        int nAtributos = this.attributeCount;
         Map<Integer, Double> m = new HashMap<>();
 
-        //Calculamos la frecuencia de las clases
-        for (int i = 0; i < this.getNumDatos(); i++) {
-            aux = datos.get(i)[nAtributos];
+        // Claculate class frequency
+        for (int i = 0; i < this.getDataCount(); i++) {
+            aux = data.get(i)[nAtributos];
             count = m.containsKey(aux) ? m.get(aux) : 0;
             m.put((int) aux, count + 1);
         }
-        //Calculamos las probabilidades (freq/NumDatos)
+        // Calculate probabilities (freq/dataCount)
         for (Map.Entry<Integer, Double> entrySet : m.entrySet()) {
             Double value = entrySet.getValue();
-            entrySet.setValue(value / getNumDatos());
+            entrySet.setValue(value / getDataCount());
         }
         return m;
     }
 
-//// Devuelve un objeto tipo Data con los datos de clase 'c'
-//
-//    public Data getDatosByClase(int c) {
-//        ArrayList<Integer> l = new ArrayList<>();
-//        int current;
-//        Data d;
-//        //Selecciono los ids de los datos de clase c
-//        for (int i = 0; i < this.getNumDatos(); i++) {
-//            current = (int) datos[i][this.getNumAtributos() - 1];
-//            if (current == c) {
-//                l.add(i);
-//            }
-//        }
-//        d = new Data(l.size(), tipoAtributos);
-//        for (int i = 0; i < d.datos.length; i++) {
-//            d.datos[i] = this.datos[l.get(i)];
-//        }
-//        return d;
-//    }
-//
-    public Data extraeDatosTrain(Partition idx) {
+    public Data extractTrainData(Partition idx) {
         int nDatos = idx.getIndicesTrain().size();
-        Data d = new Data(this.numAtributos, this.numClases);
-        d.datos = new ArrayList<>();
+        Data d = new Data(this.attributeCount, this.classCount);
+        d.data = new ArrayList<>();
 
         for (int i = 0; i < nDatos; i++) {
-            d.datos.add(this.datos.get(idx.getIndicesTrain().get(i)));
+            d.data.add(this.data.get(idx.getIndicesTrain().get(i)));
         }
 
         return d;
     }
 
-    public Data extraeDatosTest(Partition idx) {
+    public Data extractTestData(Partition idx) {
         int nDatos = idx.getIndicesTest().size();
-        Data d = new Data(this.numAtributos, this.numClases);
-        d.datos = new ArrayList<>();
+        Data d = new Data(this.attributeCount, this.classCount);
+        d.data = new ArrayList<>();
 
         for (int i = 0; i < nDatos; i++) {
-            d.datos.add(this.datos.get(idx.getIndicesTest().get(i)));
+            d.data.add(this.data.get(idx.getIndicesTest().get(i)));
         }
 
         return d;
@@ -117,7 +97,7 @@ public class Data {
     @Override
     public String toString() {
         String r = "";
-        for (Double[] dato : datos) {
+        for (Double[] dato : data) {
             r += "[";
             for (Double dato1 : dato) {
                 r += dato1 + " ";
@@ -127,121 +107,97 @@ public class Data {
         return r;
     }
 
-    public static Data cargaDeFichero(String nombreDeFichero) throws IOException {
-        return cargaDeFichero(nombreDeFichero, false);
+    public static Data loadFile(String filePath) throws IOException {
+        return loadFile(filePath, false);
     }
 
-    public static Data cargaDeFichero(String nombreDeFichero, boolean normalizar) throws IOException {
-        int numAtributos = 0;
-        /* Total de elementos en el fichero */
+    public static Data loadFile(String filePath, boolean normalize) throws IOException {
+        int totalAttribuets = 0;
+        /* Total elements on the file */
 
-        int numClases = 0;
-        Data respuesta;
+        int totalClasses = 0;
+        Data resposne;
         try {
-            FileReader fr = new FileReader(nombreDeFichero);
+            FileReader fr = new FileReader(filePath);
             BufferedReader br = new BufferedReader(fr);
 
             String line = br.readLine();
             try {
                 String[] vals = line.split(" ");
-                numAtributos = Integer.parseInt(vals[0]);
-                numClases = Integer.parseInt(vals[1]);
+                totalAttribuets = Integer.parseInt(vals[0]);
+                totalClasses = Integer.parseInt(vals[1]);
             } catch (NumberFormatException nfe) {
-                System.out.println("Número de datos y de clases debe de ser numérico.");
+                System.out.println("Class count and attribute count must be numeric.");
             }
 
             line = br.readLine();
             int x = 0;
             int y = 0;
 
-            respuesta = new Data(numAtributos, numClases);
+            resposne = new Data(totalAttribuets, totalClasses);
 
             while (line != null) {
 
-                /* Cargar los datos */
+                /* Load data */
                 String[] atributos = line.split("\\s+");
 
-                /* Ignorar si no es el número exacto de atributos */
-                if (atributos.length == numAtributos + numClases) {
-                    Double[] d = new Double[numAtributos + 1];
+                /* Ignore if the line does not contain the exact number of attributes */
+                if (atributos.length == totalAttribuets + totalClasses) {
+                    Double[] d = new Double[totalAttribuets + 1];
                     double clase = 0;
                     for (String str : line.split("\\s+")) {
                         try {
-                            if (x < numAtributos) {
+                            if (x < totalAttribuets) {
                                 d[x] = Double.parseDouble(str);
                             } else if (Double.parseDouble(str) == -100) {
-                                d[numAtributos] = clase;
+                                d[totalAttribuets] = clase;
                             } else if (Double.parseDouble(str) == 1) {
-                                d[numAtributos] = clase;
+                                d[totalAttribuets] = clase;
                             } else {
                                 clase++;
                                 continue;
                             }
                         } catch (NumberFormatException nfe) {
-                            System.out.println("Error en línea " + y + ", atributo " + x
-                                    + ". String: \" " + str + "\" no es continuo." + nfe.getMessage());
+                            System.out.println("Error on line " + y + ", attribute " + x
+                                    + ". String: \" " + str + "\"  is not continuous." + nfe.getMessage());
                         }
                         x++;
                     }
                     x = 0;
                     y++;
 
-                    respuesta.datos.add(d);
+                    resposne.data.add(d);
                 }
                 line = br.readLine();
             }
-            if (normalizar) {
-                return respuesta.normaliza();
+            if (normalize) {
+                return resposne.normaliza();
             }
-            return respuesta;
+            return resposne;
         } catch (FileNotFoundException fnfe) {
-            System.out.println("Error leyendo archivo de entrada");
+            System.out.println("Error reading input file.");
         }
         return null;
     }
 
-    private void normalizar2() {
-        for (int i = 0; i < this.getNumAtributos(); i++) {
-            double max = 0;
-            double min = Double.MAX_VALUE;
-            for (int j = 0; j < this.datos.size(); j++) {
-                double d = this.datos.get(j)[i];
-                if (d > max) {
-                    max = d;
-                }
-                if (d < min) {
-                    min = d;
-                }
-            }
-            for (int j = 0; j < this.datos.size(); j++) {
-                this.datos.get(j)[i] = (this.datos.get(j)[i] - min) * 1 / (max - min);
-            }
-        }
-    }
 
     /**
-     * Metodo que calcula la media para todos los atributos dado un grupo de datos. Si se requiere
-     * sacar por clase, llamar primero al metodo getDatosByClase y aplicar getAttMeans() sobre el
-     * nuevo objeto.
-     */
-    /**
-     * Metodo que calcula la media para todos los atributos dado un grupo de datos.Si se requiere
-     * sacar por clase, llamar primero al metodo getDatosByClase y aplicar getAttMeans() sobre el
-     * nuevo objeto.
+     * Method that calculates the mean for all attributes given a data set. If its required to get 
+     * per class, call first getDatosByClase and apply getAttMeans() to the new object.
      *
-     * @return
+     * @return an ArrayList with attribute means
      */
     public ArrayList<Double> getAttMeans() {
-        double valores[] = new double[getNumAtributos()];
+        double valores[] = new double[getAttributeCount()];
         ArrayList<Double> medias = new ArrayList<>();
 
-        for (Double[] atr : datos) {
-            for (int j = 0; j < getNumAtributos(); j++) {
+        for (Double[] atr : data) {
+            for (int j = 0; j < getAttributeCount(); j++) {
                 valores[j] += atr[j];
             }
         }
         for (int i = 0; i < valores.length; i++) {
-            valores[i] /= getNumDatos();
+            valores[i] /= getDataCount();
             medias.add(valores[i]);
         }
 
@@ -249,25 +205,24 @@ public class Data {
     }
 
     /**
-     * Metodo que calcula la varianza para todos los atributos dado un grupo de datos. Si se
-     * requiere sacar por clase, llamar primero al metodo getDatosByClase y aplicar getAttMeans()
-     * sobre el nuevo objeto.
+     * Method that calculates the variance for all attributes given a data set. If its required to get 
+     * per class, call first getDatosByClase and apply getAttMeans() to the new object.
      *
      * @return
      */
     public ArrayList<Double> getAttStandardDeviation() {
-        double valores[] = new double[getNumAtributos()];
+        double valores[] = new double[getAttributeCount()];
         ArrayList<Double> medias = this.getAttMeans();
         ArrayList<Double> desviaciones = new ArrayList<>();
 
-        for (Double[] atr : datos) {
-            for (int j = 0; j < getNumAtributos(); j++) {
+        for (Double[] atr : data) {
+            for (int j = 0; j < getAttributeCount(); j++) {
                 valores[j] += (atr[j] - medias.get(j)) * (atr[j] - medias.get(j));
             }
         }
 
         for (int i = 0; i < valores.length; i++) {
-            valores[i] = valores[i] / getNumDatos();
+            valores[i] = valores[i] / getDataCount();
             desviaciones.add(valores[i]);
         }
 
@@ -278,25 +233,21 @@ public class Data {
         ArrayList<Double> means = this.getAttMeans();
         ArrayList<Double> sd = this.getAttStandardDeviation();
 
-        Data res = new Data(this.getNumAtributos(), this.getNumClases());
+        Data res = new Data(this.getAttributeCount(), this.getClassCount());
 
         Double aux[];
-        for (int i = 0; i < this.getNumDatos(); i++) {
-            aux = new Double[this.getNumAtributos() + 1];
-            for (int j = 0; j < (this.getNumAtributos() + 1); j++) {
-                if (j == this.getNumAtributos()) {
-                    aux[j] = this.datos.get(i)[j];
+        for (int i = 0; i < this.getDataCount(); i++) {
+            aux = new Double[this.getAttributeCount() + 1];
+            for (int j = 0; j < (this.getAttributeCount() + 1); j++) {
+                if (j == this.getAttributeCount()) {
+                    aux[j] = this.data.get(i)[j];
                 } else if (sd.get(j) != 0) {
-//                        aux[j] = (this.getDatos().get(i)[j] - means.get(j)) / sd.get(j);
-                    aux[j] = (this.getDatos().get(i)[j]) / 255;
+                    aux[j] = (this.getData().get(i)[j]) / 255;
                 } else {
-                    aux[j] = (this.getDatos().get(i)[j]) / 255;
-//                        aux[j] = (this.getDatos().get(i)[j] - means.get(j)) / Double.MIN_VALUE;
-                } //                    System.out.println(sd.get(j));
+                    aux[j] = (this.getData().get(i)[j]) / 255;
+                } 
             }
-
-//            System.out.println("");
-            res.datos.add(aux);
+            res.data.add(aux);
         }
         BufferedWriter bw = null;
         try {
@@ -306,8 +257,8 @@ public class Data {
             bw.close();
 
             bw = new BufferedWriter(new FileWriter("./data/archivo_normalizado.txt"));
-            bw.write(this.getNumAtributos() + " " + this.getNumClases() + "\n");
-            for (Double[] dato : res.getDatos()) {
+            bw.write(this.getAttributeCount() + " " + this.getClassCount() + "\n");
+            for (Double[] dato : res.getData()) {
                 for (Double d : dato) {
                     bw.write(d + " ");
                 }
@@ -319,17 +270,5 @@ public class Data {
 
         return res;
     }
-//
-//    public Map<Integer, Set<Double>> getValueSet() {
-//        Map<Integer, Set<Double>> values = new HashMap();
-//        for (int i = 0; i < getNumAtributos(); i++) {
-//            Set<Double> current = new HashSet<>();
-//            for (int j = 0; j < getNumDatos(); j++) {
-//                double val = this.datos[j][i];
-//                current.add(val);
-//            }
-//            values.put(i, current);
-//        }
-//        return values;
-//    }
+    
 }

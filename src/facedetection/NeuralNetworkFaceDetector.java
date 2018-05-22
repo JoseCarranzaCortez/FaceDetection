@@ -23,7 +23,7 @@ public class NeuralNetworkFaceDetector {
     
     
     
-    public void detectFaces(String filePath, String outputFilePath){
+    public void detectFaces(String filePath, String outputFilePath, float tol){
         
         ArrayList<Integer> xList = new ArrayList<>();
         ArrayList<Integer> yList = new ArrayList<>();
@@ -75,10 +75,9 @@ public class NeuralNetworkFaceDetector {
                 
                 double clase1 = c1.getScore(w);
                 double clase2 = c2.getScore(w);
-                double tol = 0.7;
                 if (clase1 > tol && clase2 > tol) {
                     caras++;
-                    System.out.println("[" + fb.getPosX() + ", " + fb.getPosY() + "]->" + clase1 + ", "+clase2);
+                    System.out.println("Face found on coordinates: [" + fb.getPosX() + ", " + fb.getPosY() + "]-> C1 score: " + clase1 + ", C2 score: "+clase2);
                     xList.add(fb.getPosX());
                     yList.add(fb.getPosY());
                     points1.add(clase1);
@@ -101,7 +100,7 @@ public class NeuralNetworkFaceDetector {
             fg.setColor(red, green, 0);
             if (points1.get(i) >= 0.3 && points2.get(i) >= 0.3) {
                 int size = (int) (19d / scales.get(i));
-                System.out.println(size);
+                //System.out.println(size);
                 int x = (int) ((double) xList.get(i) / scales.get(i));
                 int y = (int) ((double) yList.get(i) / scales.get(i));
                 if (!((y + size >= fbOut.getHeight()) || (x + size >= fbOut.getWidth()))) {

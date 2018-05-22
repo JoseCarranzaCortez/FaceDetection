@@ -15,14 +15,14 @@ import splitting.SplittingStrategy;
 public class TestRetropropagacion {
 
     public static void main(String[] args) throws IOException {
-        Data d = Data.cargaDeFichero(args[1], true);
+        Data d = Data.loadFile(args[1], true);
         
         // Creamos una estrategia de particionado
         SplittingStrategy part = new SimpleValidation();
 
-        int neuronasEntrada = d.getNumAtributos();
+        int neuronasEntrada = d.getAttributeCount();
         int neuronasOcultas = Integer.parseInt(args[3]);
-        int neuronasSalida = d.getNumClases();
+        int neuronasSalida = d.getClassCount();
 
         // Creamos un clasificador
         // 100-8%
@@ -33,11 +33,11 @@ public class TestRetropropagacion {
 
         System.out.println("Errores:"+errores);
         
-        d = Data.cargaDeFichero("./data/test/test.txt",true);
+        d = Data.loadFile("./data/test/test.txt",true);
         
         double error = c.error(d, c);
         
-        System.out.println("Error para test con "+d.getNumDatos()+" datos : "+ error);
+        System.out.println("Error para test con "+d.getDataCount()+" datos : "+ error);
         
         c.saveToDisk("/Users/josecarranza/Desktop/faces.perceptron");
     }
