@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package classifiers;
 
 import classifiers.Classifier;
@@ -25,54 +20,54 @@ import java.util.logging.Logger;
  */
 public class MultilayerPerceptron extends Classifier implements Serializable{
 
-    /*  Activaciones de las neuronas de la capa de entrada */
-    private double[] x;  // Tamaño n
+    /*  Activation of neurons of input layer */
+    private double[] x;  // n-sized
     private final int n;
 
-    /*  Acticaciones de las neuronas de la capa oculta */
+    /*  Activation of neurons of hidden layer */
     private double[] z;
 
-    /*  Acticaciones de las neuronas de la capa de salida */
+    /*  Activation of neurons of output layer */
     private double[] y;
 
-    /* Pesos de las conexiones de la capa de entrada a la capa oculta */
+    /* Weights of connections of input layer to hidden layer */
     private double[][] v;
 
-    /* Pesos de las conexiones de la capa oculta a la capa de salida */
+    /* Weights of connections of hidden layer to output layer */
     private double[][] w;
 
-    /* Cambios en los pesos de las conexiones de la capa de entrada a la oculta */
+    /* Change of weights of connections that go from input layer to hidden layer */
     private double[][] dv;
 
-    /* Cambios en los pesos de las conexiones de la capa oculta a la capa de salida */
+    /* Change of weights of connections that go from hidden layer to output layer */
     private double[][] dw;
 
-    /* Errores para la capa de salida */
+    /* Errors for output layer */
     private double[] dk;
 
-    /* Errores para la capa oculta */
-    private double[] dj; // Tamaño p
-    private final int p;
+    /* Errors for hidden layer */
+    private double[] dj; 
+    private final int p; // p-sized
 
-    /* Vector objetivo de salida  */
-    private double[] t; // Tamaño m
-    private final int m;
+    /* Output Target vector */
+    private double[] t; 
+    private final int m; // m-sized
 
 
-    /* Tasa de aprendizaje */
+    /* Learning rate */
     private double a;
 
-    /* Umbral */
-    private double umbral;
+    /* Treshold */
+    private double treshold;
 
     /* */
     double[] z_in;
     double[] y_in;
 
-    /* Valor máximo para valores iniciales de pesos y sesgos*/
+    /* Max value for input values of weights and biases */
     private static final double MAX_INIT_VAL = 0.5;
-    private static final double TOLERANCIA = Math.pow(10, -3);
-    private static int NUM_MAX_EPOCAS;
+    private static final double TOLERANCE = Math.pow(10, -3);
+    private static int MAX_PERIOD_NUM;
 
     private final HashMap<Double, Double> fTable;
 
@@ -80,58 +75,57 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
 
     transient BufferedWriter bw;
 
-    public MultilayerPerceptron(int neuronasDeEntrada, int neuronasOcultas, int neuronasDeSalida, double tasaDeAprendizaje, double umbral) {
-        this(neuronasDeEntrada, neuronasOcultas, neuronasDeSalida, tasaDeAprendizaje, umbral, "./ecm.csv", 1000);
+    public MultilayerPerceptron(int inputNeurons, int hiddenNeurons, int outputNeurons, double learingRate, double treshold) {
+        this(inputNeurons, hiddenNeurons, outputNeurons, learingRate, treshold, "./ecm.csv", 1000);
     }
 
-    public MultilayerPerceptron(int neuronasDeEntrada, int neuronasOcultas, int neuronasDeSalida, double tasaDeAprendizaje, double umbral, String path, int epocas) {
+    public MultilayerPerceptron(int inputNeurons, int hiddenNeurons, int outputNeurons, double learningRate, double treshold, String path, int periods) {
         OUT_PATH = path;
-        NUM_MAX_EPOCAS = epocas;
+        MAX_PERIOD_NUM = periods;
 
-        n = neuronasDeEntrada;
-        p = neuronasOcultas;
-        m = neuronasDeSalida;
+        n = inputNeurons;
+        p = hiddenNeurons;
+        m = outputNeurons;
 
-        /* Creamos arreglos de activaciones */
+        /* Create arrays for the activations */
         x = new double[n];
         z = new double[p];
         y = new double[m];
 
-        z_in = new double[neuronasOcultas];
-        y_in = new double[neuronasDeSalida];
+        z_in = new double[hiddenNeurons];
+        y_in = new double[outputNeurons];
 
-        /* Creamos arreglos de pesos de conexiones 
-         * En ambos casos, el primer índice corresponde al sesgo. 
-         * Por ejemplo, v[0][j] es el sesgo de a la neurona oculta j
+        /* Create arrays of weights of connections.
+         * In both cases, the first index is saved for the bias.
+         * For example, v[0][j] is the bias of the hidden neuron j. 
          */
-        v = new double[neuronasDeEntrada + 1][neuronasOcultas]; // Incluimos el sesgo
-        w = new double[neuronasOcultas + 1][neuronasDeSalida]; // Incluimos el sesgo
+        v = new double[inputNeurons + 1][hiddenNeurons]; // Incluimos el sesgo
+        w = new double[hiddenNeurons + 1][outputNeurons]; // Incluimos el sesgo
 
-        /* Creamos arreglos de cambios en los pesos de las conexiones
-         * En ambos casos, el primer índice corresponde al sesgo. 
-         * Por ejemplo, dv[0][k] es el sesgo de a la neurona de salida k
+        /* Create arrays of weights of connections.
+         * In both cases, the first index is saved for the bias.
+         * For example, v[0][j] is the bias of the output neuron k. 
          */
-        dv = new double[neuronasDeEntrada + 1][neuronasOcultas]; // Incluimos el sesgo
-        dw = new double[neuronasOcultas + 1][neuronasDeSalida]; // Incluimos el sesgo
+        dv = new double[inputNeurons + 1][hiddenNeurons]; // Include the bias
+        dw = new double[hiddenNeurons + 1][outputNeurons]; // Include the bias
 
-        /* Creamos arreglos para guardar los errores de la capa de entrada (k) y la capa de 
-         * salida (j)
+        /* Arrays to save the errors from the input layer (k) and the output layer (j)
          */
-        dk = new double[neuronasDeSalida];
-        dj = new double[neuronasOcultas];
+        dk = new double[outputNeurons];
+        dj = new double[hiddenNeurons];
 
-        /* Creamos el arreglo para guardar las salidas esperadas de la red en cada iteración.
+        /* Create the array for saving the expected outputs of the network at each iteration. 
          */
-        t = new double[neuronasDeSalida];
+        t = new double[outputNeurons];
 
-        /* Tasa de aprendizaje */
-        a = tasaDeAprendizaje;
+        /* Learning Rate */
+        a = learningRate;
 
-        /* Umbral */
-        this.umbral = umbral;
+        /* Treshold */
+        this.treshold = treshold;
 
-        /* Inicializamos los pesos y sesgos */
-        inicializarPerceptron(); // Paso 0
+        /* Initialize weights and biases */
+        initializePerceptron(); // Step 0
         try {
             bw = new BufferedWriter(new FileWriter(OUT_PATH));
         } catch (IOException ex) {
@@ -142,69 +136,70 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
 //        initFTable();
     }
 
-    public MultilayerPerceptron(int neuronasDeEntrada, int neuronasOcultas, int neuronasDeSalida, double tasaDeAprendizaje) {
-        this(neuronasDeEntrada, neuronasOcultas, neuronasDeSalida, tasaDeAprendizaje, -1);
+    public MultilayerPerceptron(int inputNeurons, int hiddenNeurons, int outputNeurons, double learningRate) {
+        this(inputNeurons, hiddenNeurons, outputNeurons, learningRate, -1);
     }
 
     @Override
-    public void training(Data datosTrain) {
-        boolean parar = false;
-        double ecm;
+    public void training(Data trainDate) {
+        boolean shouldStop = false;
+        double mse;
         double last = 1;
         int counter = 0;
         try {
-            bw.write("Epoca,ECM\n");
+            // MSE = Mean Squared Error
+            bw.write("Period,MSE\n");
         } catch (IOException ex) {
             Logger.getLogger(MultilayerPerceptron.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        while (!parar && counter < NUM_MAX_EPOCAS) { // Paso 1
+        while (!shouldStop && counter < MAX_PERIOD_NUM) { // Step 1
             counter++;
-            /* Iteramos por los conjuntos de training */
-            double errorAcumulado = 0;
-            double errores = 0;
-            for (Double[] s : datosTrain.getData()) {  // Paso 2
+            /* Iterate through the training sets */
+            double accumulatedError = 0;
+            double numErrors = 0;
+            for (Double[] s : trainDate.getData()) {  // Step 2
 
-                feedForward(s); // Pasos 3, 4 y 5.
+                feedForward(s); // Steps 3, 4 y 5.
 
                 backPropagation();
 
-                /* Actualizar pesos y sesgos */
-                actualizarPesos();
+                /* Update weights and biases*/
+                updateWeights();
 
-                errorAcumulado += errorCuadraticoSalida();
+                accumulatedError += outputSquaredError();
 
-                if (s[datosTrain.getClassIndex()] != getClase()) {
-                    errores++;
+                if (s[trainDate.getClassIndex()] != getTargetClass()) {
+                    numErrors++;
                 }
 
             }
 
 
-            ecm = errorAcumulado / m / datosTrain.getDataCount();
+            mse = accumulatedError / m / trainDate.getDataCount();
             
-            double ratioError = Math.abs(1d - ecm / last);
+            double ratioError = Math.abs(1d - mse / last);
             
             
-            System.out.println("EPOCA: " + counter + ", errores:" + errores + ", ratio:"+ratioError);
-//            if (errores == 0) {
-//                parar = true;
+            System.out.println("PERIOD: " + counter + ", Errors:" + numErrors + ", Ratio:"+ratioError);
+//            if (numErrors == 0) {
+//                shouldStop = true;
 //            }
 
 
-            if (ratioError < TOLERANCIA) {
-                parar = true;
+            if (ratioError < TOLERANCE) {
+                shouldStop = true;
             }
-            last = ecm;
-            double porcErr = (double) errores / datosTrain.getDataCount();
+            last = mse;
+            double porcErr = (double) numErrors / trainDate.getDataCount();
             try {
-                bw.write(counter + "," + ecm + "\n");
+                bw.write(counter + "," + mse + "\n");
             } catch (IOException ex) {
                 Logger.getLogger(MultilayerPerceptron.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
-        System.out.println("NUMERO DE EPOCAS: " + counter);
+        System.out.println("PERIOD COUNT: " + counter);
 
         try {
             bw.close();
@@ -214,9 +209,9 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
     }
 
     @Override
-    public ArrayList<Integer> classify(Data datosTest) {
+    public ArrayList<Integer> classify(Data testData) {
         ArrayList<Integer> clases = new ArrayList<>();
-        for (Double[] s : datosTest.getData()) {
+        for (Double[] s : testData.getData()) {
             int clasePred = classifyPattern(convertArray(s));
             clases.add(clasePred);
         }
@@ -227,7 +222,7 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
         return (Math.random() * 2 * MAX_INIT_VAL) - MAX_INIT_VAL;
     }
 
-    private int getClase() {
+    private int getTargetClass() {
         double max = -1 * Double.MAX_VALUE;
         int maxIndex = -1;
         for (int i = 0; i < y.length; i++) {
@@ -241,42 +236,44 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
   
 
     /* Private methods */
-    private void inicializarPerceptron() {
-        /* Sesgo y pesos de la capa de entrada a la capa oculta */
+    private void initializePerceptron() {
+        /* Bias and weights of input layer to hidden layer */ 
         for (double[] v1 : v) {
             for (int i = 0; i < v1.length; i++) {
                 v1[i] = randValue();
             }
         }
-        /* Sesgo y pesos de la capa oculta a la capa de salida */
+        /* Bias and weights from hidden layer to output layer */
         for (double[] w1 : w) {
             for (int i = 0; i < w1.length; i++) {
                 w1[i] = randValue();
             }
         }
-        /* Cambios en el sesgo y pesos de la capa de entrada a la capa oculta */
+        
+        /* Changes on biases and weights from the input layer to the hidden layer */
         for (double[] dv1 : dv) {
             for (int i = 0; i < dv1.length; i++) {
                 dv1[i] = 0;
             }
         }
-        /* Cambios en el sesgo y pesos de la capa oculta a la capa de salida */
+        
+        /* Changes on the bias and weights from the hidden layer to the output layer */
         for (double[] dw1 : dw) {
             for (int i = 0; i < dw1.length; i++) {
                 dw1[i] = 0;
             }
         }
-        /* Errores en la capa de salida */
+        /* Errors on the output layer */
         for (int i = 0; i < dk.length; i++) {
             dk[i] = 0;
         }
-        /* Errores en la capa oculta */
+        /* Errors on the hidden layer */
         for (int i = 0; i < dj.length; i++) {
             dj[i] = 0;
         }
     }
 
-    private void calcularActivacionesCapaOculta() {
+    private void calculateHiddenLayerActivations() {
         for (int j = 0; j < p; j++) {
             z_in[j] = v[0][j];
             for (int i = 0; i < n; i++) {
@@ -286,7 +283,7 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
         }
     }
 
-    private void calcularActivacionesCapaDeSalida() {
+    private void calculateOuputLayerActivations() {
         for (int k = 0; k < m; k++) {
             y_in[k] = w[0][k];
             for (int j = 0; j < p; j++) {
@@ -297,27 +294,18 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
     }
 
     /**
-     * Función sigmoidal
+     * Sigmoidal function
      *
      * @param x
-     * @return funcion sigmoideal de x
+     * @return sigmoidal function of x
      */
     private double f(double x) {
-        
-//        x = setPrecision(x, 5);
-        
-//        if (fTable.containsKey(x)) {
-//            return fTable.get(x);
-//        } else {
-            double result = (double) (2 / (1 + Math.exp(-x))) - 1;
-//            System.out.println("--------------X:" + x);
-//            fTable.put(x, result);
-            return result;
-//        }
+        double result = (double) (2 / (1 + Math.exp(-x))) - 1;
+        return result;
+
     }
 
     private static double fRaw(double x) {
-//        System.out.println("x: "+x);
         double result = (double) (2 / (1 + Math.exp(-x))) - 1;
         return result;
     }
@@ -326,19 +314,19 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
         return 0.5 * (1 + f(x)) * (1 - f(x));
     }
 
-    private void calcularErrorCapaDeSalida() {
+    private void calculateOutputLayerError() {
         for (int k = 0; k < m; k++) {
             dk[k] = (t[k] - y[k]) * fp(y_in[k]);
-            /* Sesgo */
+            /* Bias */
             dw[0][k] = a * dk[k];
-            /* Cambios en los pesos*/
+            /* Change on weights */
             for (int j = 1; j <= z.length; j++) {
                 dw[j][k] = a * dk[k] * z[j - 1];  // revisar
             }
         }
     }
 
-    private void calcularErrorCapaOculta() {
+    private void calculateHiddenLayerError() {
         double[] dj_in = new double[p];
         for (int j = 0; j < p; j++) {
             dj_in[j] = 0;
@@ -347,17 +335,17 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
             }
             dj[j] = dj_in[j] * fp(z_in[j]);
 
-            /* Calculamos cambio en el sesgo */
+            /* Calculate change on bias */
             dv[0][j] = a * dj[j];
 
-            /* Calculamos cambio en las conexiones */
+            /* Calculate change on connections */
             for (int i = 1; i <= x.length; i++) {
                 dv[i][j] = a * dj[j] * x[i - 1]; // revisar
             }
         }
     }
 
-    private void setSalidaEsperada(double d) {
+    private void setExpectedOutput(double d) {
         int idx = (int) d;
         for (int i = 0; i < t.length; i++) {
             t[i] = -.9;
@@ -365,7 +353,7 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
         t[idx] = .9;
     }
 
-    private void actualizarPesos() {
+    private void updateWeights() {
         for (int k = 0; k < m; k++) {
             for (int j = 0; j <= p; j++) {
                 w[j][k] += dw[j][k];
@@ -376,63 +364,41 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
                 v[i][j] += dv[i][j];
             }
         }
-
-//        for (int k = 0; k < y.length; k++) {
-//            for (int j = 0; j < z.length; j++) {
-//                w[j][k] += dw[j][k];
-//                for (int i = 0; i < x.length; i++) {
-//                    v[i][j] += dv[i][j];
-//                }
-//            }
-//        }
-
-        /*
-         for (int k = 0; k < y.length; k++) {
-            w[0][k] += dw[0][k];
-            for (int j = 1; j <= z.length; j++) {
-                w[j][k] += dw[j][k];
-                v[0][j - 1] += dv[0][j - 1];
-                for (int i = 1; i <= x.length; i++) {
-                    v[i][j - 1] += dv[i][j - 1];
-                }
-            }
-        }
-         */
     }
 
-    private double errorCuadraticoSalida() {
-        double eAcumulado = 0;
+    private double outputSquaredError() {
+        double accumulatedError = 0;
         for (int i = 0; i < m; i++) {
-            eAcumulado += Math.pow((t[i] - y[i]), 2);
+            accumulatedError += Math.pow((t[i] - y[i]), 2);
         }
-//        eAcumulado = eAcumulado / m;
-        return eAcumulado;
+//        accumulatedError = accumulatedError / m;
+        return accumulatedError;
     }
-    private void feedForwardParcial(Double[] s) {
+    private void partialFeedForward(Double[] s) {
         /* Feedforward */
         for (int i = 0; i < n; i++) { // Paso 3
             x[i] = s[i];
         }
         /* Feedforward
-           Calcular respuesta de las neuronas de la capa oculta (z) 
+           Calculate response of neurons of the hidden layer (z)
          */
-        calcularActivacionesCapaOculta(); // Paso 4
-        /* Calcular respuesta de las neuronas de la capa de salida (y)*/
-        calcularActivacionesCapaDeSalida(); // Paso 5     
+        calculateHiddenLayerActivations(); // Step 4
+        /* Calculate response of neurons of the output layer (y) */
+        calculateOuputLayerActivations(); // Step 5     
     }
     private void feedForward(Double[] s) {
-        feedForwardParcial(s);
-        /* Asignar vector objetivo */
-        setSalidaEsperada(s[s.length - 1]);
+        partialFeedForward(s);
+        /* Asign objective vector */
+        setExpectedOutput(s[s.length - 1]);
     }
 
     private void backPropagation() {
         /* Backpropagation
-           Calcular el error en la capa de salida (y)
+           Calculate the error on the output layer (y)
          */
-        calcularErrorCapaDeSalida(); // Paso 6
-        /* Calcular el error en la capa oculta */
-        calcularErrorCapaOculta(); // Paso 7
+        calculateOutputLayerError(); // Step 6
+        /* Calculate error on the hidden layer */
+        calculateHiddenLayerError(); // Step 7
     }
 
     private String getAllWeights() {
@@ -443,7 +409,7 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
             }
         }
         r += "\n";
-        /* Sesgo y pesos de la capa oculta a la capa de salida */
+        /* Bias and weights of the hidden layer to the output layer */
         for (double[] w1 : w) {
             for (int i = 0; i < w1.length; i++) {
                 r += w1[i] + ",";
@@ -455,13 +421,13 @@ public class MultilayerPerceptron extends Classifier implements Serializable{
     
     @Override
     public int classifyPattern(double[] s) {
-        feedForwardParcial(convertArray(s));
-        return getClase();
+        partialFeedForward(convertArray(s));
+        return getTargetClass();
     }
 
    @Override
     public double getScore(double[] s) {
-        feedForwardParcial(convertArray(s));
+        partialFeedForward(convertArray(s));
         return y[1];
     }
 
